@@ -97,7 +97,7 @@ jobs:
             echo "::endgroup::"
 
   native:
-    name: native ${{ matrix.os }} ${{ matrix.toolset }}
+    name: native ${{ matrix.os }} ${{ matrix.toolset }} ${{ matrix.info }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -105,8 +105,11 @@ jobs:
         os: [ 'ubuntu' ]
         toolset: [ 'gcc', 'clang' ]
         include:
-          - { os: macos, toolset: darwin, options: cxxstd=17 }
-          - { os: macos, toolset: clang, options: cxxstd=17 }
+          - { os: macos, toolset: darwin }
+          - { os: macos, toolset: gcc-12 }
+          - { os: macos, toolset: clang }
+          - { os: macos, toolset: clang, options: '"compileflags=-arch arm64 -arch x86_64"', info: dual-arch }
+          - { os: macos, toolset: clang, options: 'architecture=arm testing.execute=off', info: crosscompile-arm64 }
           - { os: windows, toolset: gcc }
           - { os: windows, toolset: clang-win, options: embed-manifest-via=linker }
 
