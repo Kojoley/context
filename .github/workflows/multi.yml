@@ -97,7 +97,7 @@ jobs:
             echo "::endgroup::"
 
   native:
-    name: native ${{ matrix.os }} ${{ matrix.toolset }} ${{ matrix.info }}
+    name: native ${{ matrix.os }} ${{ matrix.toolset }} ${{ matrix.msys }} ${{ matrix.info }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -117,8 +117,25 @@ jobs:
           - { os: windows, toolset: msvc, options: 'architecture=arm address-model=64 testing.execute=off', info: target-arm64 }
           - { os: windows, toolset: clang-win, options: embed-manifest-via=linker }
           - { os: windows, toolset: clang-win, options: 'embed-manifest-via=linker address-model=32', info: 32bit }
+          # fatal error: error in backend: Cannot select: 0x1dbc36135c0: ch = cleanupret 0x1dbc3613a38
+          #- { os: windows, toolset: clang-win, options: 'embed-manifest-via=linker architecture=arm address-model=32 testing.execute=off', info: target-arm32 }
+          - { os: windows, toolset: clang-win, options: 'embed-manifest-via=linker architecture=arm address-model=64 testing.execute=off', info: target-arm64 }
+          - { os: windows, toolset: gcc, msys: mingw32 }
+          - { os: windows, toolset: gcc, msys: ucrt64 }
+          - { os: windows, toolset: clang, msys: clang64 }
+
+    defaults:
+      run:
+        shell: ${{ matrix.msys && 'msys2 {0}' || 'bash' }}
 
     steps:
+      - name: Install MSYS2
+        if: matrix.msys
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msys }}
+          pacboy: ${{ matrix.toolset }}:p
+
       - name: Checkout Boost super-repo
         env:
           REF: ${{ github.base_ref || github.ref_name }}
@@ -128,6 +145,7 @@ jobs:
              https://github.com/boostorg/boost.git '${{ github.workspace }}'
 
       - name: Checkout minimal Boost
+        shell: bash
         run: git submodule update --init --depth 1 --jobs 10 --single-branch --
           tools/build
           libs/config
@@ -139,6 +157,7 @@ jobs:
           path: libs/context
 
       - name: Checkout library dependencies
+        shell: bash
         run: python tools/boostdep/depinst/depinst.py --git_args "--jobs 10" context
 
       - name: Bootstrap via bash
@@ -151,10 +170,12 @@ jobs:
         run: .\bootstrap.bat && echo "$pwd" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Boost.Config info
-        run: b2 libs/config/test//print_config_info toolset=${{ matrix.toolset }} ${{ matrix.options }}
+        if: ${{ ! contains(matrix.options, 'testing.execute=off') }}
+        run: ./b2 libs/config/test//print_config_info toolset=${{ matrix.toolset }} ${{ matrix.options }}
 
       - name: Boost.Predef info
-        run: b2 libs/predef/test//info_as_c -a --verbose-test toolset=${{ matrix.toolset }} ${{ matrix.options }}
+        if: ${{ ! contains(matrix.options, 'testing.execute=off') }}
+        run: ./b2 libs/predef/test//info_as_c -a --verbose-test toolset=${{ matrix.toolset }} ${{ matrix.options }}
 
       - name: Build and test
-        run: b2 libs/context/test toolset=${{ matrix.toolset }} ${{ matrix.options }}
+        run: ./b2 libs/context/test toolset=${{ matrix.toolset }} ${{ matrix.options }}
