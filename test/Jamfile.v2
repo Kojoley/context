@@ -48,12 +48,11 @@ rule native-impl ( properties * )
     return $(result) ;
 }
 
-obj is_libstdcxx : is_libstdcxx.cpp ;
-explicit is_libstdcxx ;
+exe has_segmented_stack : has_segmented_stack.cpp : <cxxflags>-fsplit-stack ;
+explicit has_segmented_stack ;
 
 local only-when-segmented-stack-is-available =
-    [ check-has-flag <cxxflags>-fsplit-stack : <segmented-stacks>on : <build>no ]
-    [ check-target-builds is_libstdcxx "is libstdc++" : : <build>no ]
+    [ check-target-builds has_segmented_stack "segmented stacks supported" : <segmented-stacks>on : <build>no ]
   ;
 
 test-suite minimal :
