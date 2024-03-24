@@ -21,6 +21,7 @@ jobs:
       matrix:
         default-container: [ 'debian:latest' ]
         container: [ null ]
+        toolset: [ 'gcc', 'clang' ]
         platform:
           - linux/386
           - linux/amd64
@@ -31,9 +32,10 @@ jobs:
           - linux/ppc64le
           - linux/s390x
         include:
-          - { container: 'debian:experimental', platform: linux/riscv64 }
-          - { container: 'multiarch/debian-debootstrap:mipsel-buster' }
-          - { container: 'multiarch/debian-debootstrap:mips-buster' }
+          - { container: 'debian:experimental', platform: linux/riscv64, toolset: gcc }
+          - { container: 'debian:experimental', platform: linux/riscv64, toolset: clang }
+          - { container: 'multiarch/debian-debootstrap:mipsel-buster', toolset: gcc }
+          - { container: 'multiarch/debian-debootstrap:mips-buster', toolset: gcc }
 
     steps:
       - name: Checkout Boost super-repo
@@ -75,25 +77,25 @@ jobs:
             set -eu
             uname -m
             dpkg --print-architecture
-            echo "::group::Install GCC"
+            echo "::group::Install ${{ matrix.toolset }}"
               apt-get -o Acquire::Retries=3 update
-              apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++
+              apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++ ${{ matrix.toolset }}
             echo "::endgroup::"
-            echo "::group::GCC info"
-              g++ -v
+            echo "::group::${{ matrix.toolset }} info"
+              ${{ matrix.toolset }} -v
             echo "::endgroup::"
             echo "::group::Build B2"
               ./bootstrap.sh
             echo "::endgroup::"
             echo "::group::Boost.Config info"
-              ./b2 libs/config/test//print_config_info
+              ./b2 toolset=${{ matrix.toolset }} libs/config/test//print_config_info
             echo "::endgroup::"
             echo "::group::Boost.Predef info"
-              ./b2 libs/predef/test//info_as_c -a --verbose-test
+              ./b2 toolset=${{ matrix.toolset }} libs/predef/test//info_as_c -a --verbose-test
             echo "::endgroup::"
 
             echo "::group::Run tests"
-              ./b2 libs/context/test
+              ./b2 toolset=${{ matrix.toolset }} libs/context/test
             echo "::endgroup::"
 
   native:
