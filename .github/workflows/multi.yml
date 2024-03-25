@@ -91,19 +91,6 @@ jobs:
             echo "::group::${{ matrix.toolset }} info"
               ${{ matrix.toolset }} -v
             echo "::endgroup::"
-            echo "::group::Build B2"
-              ./bootstrap.sh
-            echo "::endgroup::"
-            echo "::group::Boost.Config info"
-              ./b2 toolset=${{ matrix.toolset }} libs/config/test//print_config_info
-            echo "::endgroup::"
-            echo "::group::Boost.Predef info"
-              ./b2 toolset=${{ matrix.toolset }} libs/predef/test//info_as_c -a --verbose-test
-            echo "::endgroup::"
-
-            echo "::group::Run tests"
-              ./b2 toolset=${{ matrix.toolset }} libs/context/test
-            echo "::endgroup::"
 
             cmake -B build -DCMAKE_CXX_COMPILER=${{ matrix.toolset }} -DBOOST_INCLUDE_LIBRARIES=context .
             cmake --build build
@@ -171,26 +158,6 @@ jobs:
       - name: Checkout library dependencies
         shell: bash
         run: python tools/boostdep/depinst/depinst.py --git_args "--jobs 10" context
-
-      - name: Bootstrap via bash
-        shell: bash
-        if: ${{ runner.os != 'Windows' }}
-        run: ./bootstrap.sh && echo "`pwd`" >> $GITHUB_PATH
-      - name: Bootstrap via bat
-        shell: pwsh
-        if: ${{ runner.os == 'Windows' }}
-        run: .\bootstrap.bat && echo "$pwd" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Boost.Config info
-        if: ${{ ! contains(matrix.options, 'testing.execute=off') }}
-        run: ./b2 libs/config/test//print_config_info toolset=${{ matrix.toolset }} ${{ matrix.options }}
-
-      - name: Boost.Predef info
-        if: ${{ ! contains(matrix.options, 'testing.execute=off') }}
-        run: ./b2 libs/predef/test//info_as_c -a --verbose-test toolset=${{ matrix.toolset }} ${{ matrix.options }}
-
-      #- name: Build and test
-      #  run: ./b2 cmake
 
       - name: Init CMake Build
         run: cmake -B build -DBOOST_INCLUDE_LIBRARIES=context .
