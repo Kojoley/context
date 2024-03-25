@@ -27,7 +27,7 @@ unset(_default_binfmt)
 
 ## ABI
 
-math(EXPR _bits "${CMAKE_SIZEOF_VOID_P}*8")
+math(EXPR _bits "${CMAKE_CXX_SIZEOF_DATA_PTR}*8")
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^[Aa][Rr][Mm]" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
   set(_default_abi aapcs)
