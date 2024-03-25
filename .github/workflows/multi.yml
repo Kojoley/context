@@ -86,7 +86,7 @@ jobs:
             dpkg --print-architecture
             echo "::group::Install ${{ matrix.toolset }}"
               apt-get -o Acquire::Retries=3 update
-              apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++ ${{ matrix.toolset }}
+              apt-get -o Acquire::Retries=3 -yq --no-install-suggests --no-install-recommends install g++ ${{ matrix.toolset }} cmake make
             echo "::endgroup::"
             echo "::group::${{ matrix.toolset }} info"
               ${{ matrix.toolset }} -v
@@ -104,6 +104,9 @@ jobs:
             echo "::group::Run tests"
               ./b2 toolset=${{ matrix.toolset }} libs/context/test
             echo "::endgroup::"
+
+            cmake -B build -DCMAKE_CXX_COMPILER=${{ matrix.toolset }} -DBOOST_INCLUDE_LIBRARIES=context .
+            cmake --build build
 
   native:
     name: native ${{ matrix.os }} ${{ matrix.toolset }} ${{ matrix.msys }} ${{ matrix.info }}
@@ -186,5 +189,13 @@ jobs:
         if: ${{ ! contains(matrix.options, 'testing.execute=off') }}
         run: ./b2 libs/predef/test//info_as_c -a --verbose-test toolset=${{ matrix.toolset }} ${{ matrix.options }}
 
-      - name: Build and test
-        run: ./b2 libs/context/test toolset=${{ matrix.toolset }} ${{ matrix.options }}
+      #- name: Build and test
+      #  run: ./b2 cmake
+
+      - name: Init CMake Build
+        run: cmake -B build -DBOOST_INCLUDE_LIBRARIES=context .
+
+      - name: CMake Build
+        run: cmake --build build
+
+      #- ctest --output-on-failure -R boost_preprocessor -C Debug
