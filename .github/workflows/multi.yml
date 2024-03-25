@@ -31,6 +31,13 @@ jobs:
           - linux/mips64le
           - linux/ppc64le
           - linux/s390x
+        exclude:
+          # Clang has issues with platform detection
+          - { platform: linux/arm/v5, toolset: clang }
+          - { platform: linux/arm/v7, toolset: clang }
+          # CALL16 reloc at 0x14 not against global symbol
+          # BFD (GNU Binutils for Debian) 2.40 assertion fail ../../bfd/elfxx-mips.c:3669
+          - { platform: linux/mips64le, toolset: clang }
         include:
           - { container: 'debian:experimental', platform: linux/riscv64, toolset: gcc }
           - { container: 'debian:experimental', platform: linux/riscv64, toolset: clang }
