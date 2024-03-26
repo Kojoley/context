@@ -133,7 +133,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.msys }}
-          pacboy: ${{ matrix.toolset }}:p
+          pacboy: ${{ matrix.toolset }}:p cmake:p ninja:p
 
       - name: Checkout Boost super-repo
         env:
@@ -159,8 +159,15 @@ jobs:
         shell: bash
         run: python tools/boostdep/depinst/depinst.py --git_args "--jobs 10" context
 
+      - name: Install Ninja
+        if: ${{ !startsWith(matrix.toolset, 'msvc') && !matrix.msys }}
+        run: pip install ninja
+
       - name: Init CMake Build
         run: cmake -B build -DBOOST_INCLUDE_LIBRARIES=context .
+             ${{ contains(matrix.options, 'address-model=32') && (startsWith(matrix.toolset, 'msvc') && '-A Win32' || '-DCMAKE_CXX_FLAGS=-m32') || '' }}
+             ${{ startsWith(matrix.toolset, 'clang-win') && '-DCMAKE_CXX_COMPILER=clang-cl' || '' }}
+             ${{ startsWith(matrix.toolset, 'gcc') && format('-G Ninja -DCMAKE_CXX_COMPILER={0}', matrix.toolset) || '' }}
 
       - name: CMake Build
         run: cmake --build build
