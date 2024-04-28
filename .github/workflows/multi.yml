@@ -70,6 +70,7 @@ jobs:
           options: -v ${{ github.workspace }}:/boost-root -w /boost-root ${{ matrix.platform && format('--platform {0}', matrix.platform) || '' }}
           run: |
             set -eu
+            nproc
             echo "::group::Switch to archive repository"
               ${{ contains(matrix.container, 'buster') }} && sed -i 's/deb.debian/archive.debian/' /etc/apt/sources.list && cat /etc/apt/sources.list
             echo "::endgroup::"
