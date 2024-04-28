@@ -31,8 +31,8 @@ jobs:
           - linux/s390x
         include:
           - { container: 'debian:experimental', platform: linux/riscv64 }
-          - { container: 'multiarch/debian-debootstrap:mipsel-buster' }
-          - { container: 'multiarch/debian-debootstrap:mips-buster' }
+          - { container: 'lpenz/debian-buster-mipsel', platform: linux/mipsel }
+          - { container: 'lpenz/debian-buster-mips', platform: linux/mips }
 
     steps:
       - name: Checkout Boost super-repo
